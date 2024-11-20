@@ -1,0 +1,48 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+hosts = [
+  { :hostname => "desarrollo", :ip => "192.168.56.9",:extra_storage => false, :is_node_manager => false },
+  { :hostname => "ansibleManagerNode", :ip => "192.168.56.8",:extra_storage => true, :is_node_manager => true },
+]
+Vagrant.configure("2") do |config|
+    hosts.each do |conf|
+		config.vm.box = "ubuntu/jammy64"
+        config.vm.define conf[:hostname] do |node|
+			hostName=conf[:hostname]
+			ip_address = conf[:ip]
+			node.vm.hostname = hostName
+			node.vm.network "private_network", :name => '', ip: ip_address
+			node.vm.provider "virtualbox" do |vb|
+				vb.memory = "1512"
+				vb.cpus = 2
+				vb.name = hostName
+				vb.linked_clone = true
+				vb.gui = false
+			end
+			if conf[:extra_storage]
+				node.vm.disk :disk, size: "10GB", name: "lvm"
+				node.vm.disk :disk, size: "10GB", name: "defensa"
+			end
+			if conf[:is_node_manager]
+				node.vm.provision "shell", path: "precondiciones.sh"
+			end
+			node.vm.provision "shell", path: "script_Enable_ssh_password.sh"
+			node.ssh.insert_key = true
+			node.vm.post_up_message = <<-MENSAJE
+			###########################################################################
+			#
+			# Para Ingresar a la VM: #{node} puede usar cualquiera de las dos opciones:
+			#
+			###########################################################################
+			# 1. (usar Vagrant)
+			
+			vagrant ssh
+	  
+			# 2. Usar SSH indicando la key Privada 
+			# Puede usar la private_key proporcionada por vagrant
+			ssh -i .vagrant/machines/default/virtualbox/private_key vagrant@#{ip_address}
+			
+			MENSAJE
+		end
+	end   
+end
