@@ -1,0 +1,26 @@
+---
+- hosts:
+    - all
+  tasks:
+    - name: "Set WEB_SERVICE dependiendo de la distro"
+      set_fact:
+        WEB_SERVICE: "{% if   ansible_facts['os_family']  == 'Debian' %}apache2
+                      {% endif %}"
+    - name: "Run the equivalent of 'apt update' as a separate step"
+      become: yes
+      ansible.builtin.apt:
+        update_cache: yes
+    - name: "Instalando apache "
+      become: yes
+      package:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - "{{ WEB_SERVICE }}"
+    - name: "Habilitar y restartear apache2"
+      become: yes
+      ansible.builtin.service:
+        name: "apache2"
+        enabled: yes
+        state: restarted
+      ignore_errors: true
