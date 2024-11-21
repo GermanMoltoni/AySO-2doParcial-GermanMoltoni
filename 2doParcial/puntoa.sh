@@ -46,6 +46,7 @@ EOF
 sudo mkswap /dev/sdc1
 sudo swapon /dev/sdc1
 swapon -s
+free -h
 #Creo volumenes físicos
 sudo pvcreate /dev/sdc2 /dev/sdc3 /dev/sdc5 /dev/sdc6
 #Creo grupo de volumenes físicos
